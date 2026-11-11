@@ -30,6 +30,7 @@
     "doctor:expo": "npx --yes expo-doctor@latest",
     "new-app": "node scripts/new-app.mjs",
     "create-app": "node scripts/create-app.mjs",
+    "sync-base": "node scripts/sync-base.mjs",
     "eas": "npx --yes eas-cli@latest",
     "build:dev": "npx --yes eas-cli@latest build --profile development",
     "build:dev:sim": "npx --yes eas-cli@latest build:dev",

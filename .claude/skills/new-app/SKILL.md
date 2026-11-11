@@ -22,7 +22,7 @@ Pick the case that matches where you are:
   `npm run new-app -- --name "Habit Tracker" --id com.yourname.habittracker`
 - **Inside the base repo itself, making a sibling project:**
   `npm run create-app -- ../habit-tracker --name "Habit Tracker" --id com.yourname.habittracker`
-  (copies tracked files, fresh git history, `npm ci`). Then continue working in the new folder.
+  (clones the base with its history and keeps it as the `base` remote for `npm run sync-base`, then `npm ci`). Then continue working in the new folder.
 
 Both update `app.json`, `package.json`, `package-lock.json`, the README title, and unlink any EAS project.
 Never edit the bundle ID by hand in more than one place — `app.json` is the single source; `app.config.ts`

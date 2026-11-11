@@ -48,10 +48,11 @@ cloud builds, store submission and OTA updates.
 | Inspect resolved app config               | `npx expo config --type public` (prefix `APP_VARIANT=…` to switch)                                                      |
 | Expo dependency health                    | `npm run doctor:expo` · fix versions: `npx expo install --fix`                                                          |
 | Cloud builds / release / OTA              | `npm run build:dev` · `build:dev:sim` · `build:preview` · `release` · `update:preview` · `update:production` · `deploy` |
+| Pull improvements from the base template  | `npm run sync-base -- --dry-run` · `npm run sync-base` (merges `base/main`, doesn't commit; see `sync-base` skill)      |
 
 Skills with step-by-step playbooks live in `.claude/skills/` (plain Markdown — any agent can read them):
 `start`, `wrap`, `ticket` (the session workflow below), `new-app`, `add-feature`, `add-native-capability`,
-`run-app`, `release`. Claude Code also gets Expo's official plugin (`expo@claude-plugins-official`: Expo/EAS
+`run-app`, `release`, `sync-base`. Claude Code also gets Expo's official plugin (`expo@claude-plugins-official`: Expo/EAS
 skills + the Expo MCP server).
 
 ## How work flows: tickets and sessions
@@ -100,7 +101,7 @@ src/
   theme/                  Tokens (colors, spacing, radius, typography), useTheme, makeStyles
 assets/                   App icon (assets/app.icon = iOS 26 Icon Composer), Android adaptive icon, splash
 .maestro/                 E2E flows (YAML) + subflows/
-scripts/                  doctor, setup-mac.sh, screenshot, e2e, new-app, create-app (Node, no deps);
+scripts/                  doctor, setup-mac.sh, screenshot, e2e, new-app, create-app, sync-base (Node, no deps);
                           lib/ (identity, devices), templates/TICKETS.md (fresh backlog for new apps)
 .eas/workflows/           EAS Workflows: dev builds, preview builds, production deploy
 .github/workflows/ci.yml  CI: npm run check + bundle both platforms
@@ -156,6 +157,9 @@ TICKETS.md                Ordered, living backlog; one ticket per session (/star
 
 - **Variants**: `APP_VARIANT` = `development` (local scripts, `.dev` bundle ID, "<Name> Dev"), `preview`,
   `production` (default when unset). Switching variants for local native builds needs `npm run native:clean`.
+- **Base updates**: apps share the base's git history (`base` remote) and pull its improvements with
+  `npm run sync-base`. Generic fixes (tooling, skills, design-system bugs) belong in the base first; app-specific
+  edits to base-owned files (`.claude/`, `scripts/`, `docs/`, configs) will need re-applying at merge time.
 - **OTA updates** only reach builds with the same runtime fingerprint. Native changes ⇒ new store build.
 - **Expo Go** supports only the latest SDK and only its bundled native modules. `expo-dev-client` is installed,
   so `npm start` targets dev builds; use `npm run start:go` for Expo Go.

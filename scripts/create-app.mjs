@@ -1,20 +1,23 @@
 #!/usr/bin/env node
 /**
- * Creates a brand-new app from this base in another folder: copies the repo (tracked files only),
- * sets the new identity, starts a fresh git history and installs dependencies.
+ * Creates a brand-new app from this base in another folder: clones the base (committed state, with its
+ * history), sets the new identity, commits it and installs dependencies. The base stays reachable as the
+ * `base` remote, so `npm run sync-base` in the app can merge later base improvements.
  *
  *   npm run create-app -- ../habit-tracker --name "Habit Tracker" --id com.yourname.habittracker
  *   npm run create-app -- ../habit-tracker          # prompts for name / ID
  *
- * Options: --name, --id, --slug, --no-install, --no-git
+ * Options: --name, --id, --slug, --no-install
  * Tip: set your default ID prefix once with `npm pkg set config.bundleIdPrefix=com.yourname`.
  */
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
-import { basename, dirname, join, relative, resolve } from 'node:path';
+import { existsSync, readdirSync } from 'node:fs';
+import { basename, relative, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
 import { applyIdentity, printNextSteps, resolveIdentity, slugify } from './lib/identity.mjs';
+
+const BASE_BRANCH = 'main';
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -23,7 +26,6 @@ const { values, positionals } = parseArgs({
     id: { type: 'string' },
     slug: { type: 'string' },
     'no-install': { type: 'boolean', default: false },
-    'no-git': { type: 'boolean', default: false },
   },
 });
 
@@ -32,14 +34,36 @@ function fail(message) {
   process.exit(1);
 }
 
-const source = process.cwd();
+const git = (args, cwd) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
+
+let source;
+try {
+  source = git(['rev-parse', '--show-toplevel'], process.cwd());
+} catch {
+  fail('Run this from inside the base repository (a git checkout).');
+}
+
 const targetArg = positionals[0];
 if (!targetArg)
   fail('Usage: npm run create-app -- <folder> [--name "My App"] [--id com.you.myapp]');
-const target = resolve(source, targetArg);
+const target = resolve(process.cwd(), targetArg);
 
 if (existsSync(target) && readdirSync(target).length > 0)
   fail(`${target} already exists and is not empty.`);
+
+let baseSha;
+try {
+  baseSha = git(['rev-parse', '--short', `refs/heads/${BASE_BRANCH}`], source);
+} catch {
+  fail(`The base has no "${BASE_BRANCH}" branch to create the app from.`);
+}
+
+if (git(['status', '--porcelain'], source)) {
+  console.warn(
+    `! The base has uncommitted changes. They are NOT included (the app is cloned from ${BASE_BRANCH} @ ${baseSha}).\n` +
+      '  Commit them in the base and run `npm run sync-base` in the app to bring them over later.',
+  );
+}
 
 let identity;
 try {
@@ -51,41 +75,32 @@ try {
   fail(error.message);
 }
 
-// Copy everything git knows about (tracked + new, minus ignored): no node_modules, ios/, android/…
-const files = execFileSync(
-  'git',
-  ['ls-files', '-z', '--cached', '--others', '--exclude-standard'],
-  {
-    cwd: source,
-    encoding: 'utf8',
-  },
-)
-  .split('\0')
-  .filter((file) => file && existsSync(join(source, file)));
+const run = (cmd, args) => execFileSync(cmd, args, { cwd: target, stdio: 'inherit' });
 
-console.log(`Copying ${files.length} files → ${target}`);
-for (const file of files) {
-  const destination = join(target, file);
-  mkdirSync(dirname(destination), { recursive: true });
-  copyFileSync(join(source, file), destination);
-}
+console.log(`Cloning the base (${BASE_BRANCH} @ ${baseSha}) → ${target}`);
+execFileSync(
+  'git',
+  ['clone', '--quiet', '--origin', 'base', '--branch', BASE_BRANCH, source, target],
+  { stdio: 'inherit' },
+);
+// `git pull` must not merge the base behind sync-base's back; the app's own `origin` comes later.
+run('git', ['branch', '--quiet', '--unset-upstream']);
 
 applyIdentity(target, identity);
 
-const run = (cmd, args) => execFileSync(cmd, args, { cwd: target, stdio: 'inherit' });
-
-if (!values['no-git']) {
-  run('git', ['init', '--quiet', '--initial-branch=main']);
-  run('git', ['add', '-A']);
-  try {
-    execFileSync('git', ['commit', '--quiet', '-m', `Create ${identity.name} from base`], {
+run('git', ['add', '-A']);
+try {
+  execFileSync(
+    'git',
+    ['commit', '--quiet', '-m', `Create ${identity.name} from base (${baseSha})`],
+    {
       cwd: target,
       stdio: 'ignore',
-    });
-    console.log('✓ Initialized git repository with an initial commit');
-  } catch {
-    console.log('✓ Initialized git repository (files staged; commit when ready)');
-  }
+    },
+  );
+  console.log('✓ Committed the new identity on top of the base history');
+} catch {
+  console.log('✓ Identity applied (files staged; commit when ready)');
 }
 
 if (!values['no-install']) {

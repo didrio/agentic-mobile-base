@@ -16,6 +16,7 @@
       "Bash(npm run doctor *)",
       "Bash(npm run screenshot *)",
       "Bash(npm run e2e *)",
+      "Bash(npm run sync-base *)",
       "Bash(npx expo install *)",
       "Bash(npx expo config *)",
       "Bash(npx expo export *)",

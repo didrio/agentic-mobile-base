@@ -159,6 +159,7 @@ export function printNextSteps({ name, id }, { cdPath } = {}) {
     '  3. /start T1 — Shape the app (describe your idea; the agent plans it and writes the next tickets)',
     '',
     'Handy along the way: npm run doctor · npm run ios / android · npx eas-cli@latest init (own EAS project)',
+    'Later: npm run sync-base pulls in improvements made to the base (see docs/new-app-checklist.md)',
     '',
   ];
   console.log(lines.join('\n'));

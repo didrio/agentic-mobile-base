@@ -22,12 +22,13 @@ devices and one-command toolchain setup (`bash scripts/setup-mac.sh`): [docs/get
 
 ```bash
 npm pkg set config.bundleIdPrefix=com.yourname     # once
-npm run create-app -- ../my-app --name "My App"     # copy + rename + fresh git + install
+npm run create-app -- ../my-app --name "My App"     # clone + rename + install
 ```
 
 Then open the new folder in Claude Code (Opus, high effort, plan mode on) and run `/start T1`: describe the idea,
 and the agent plans it, builds the first slice and writes the backlog. Checklist:
-[docs/new-app-checklist.md](docs/new-app-checklist.md).
+[docs/new-app-checklist.md](docs/new-app-checklist.md). Later improvements to the base reach the app with
+`npm run sync-base` (section 5 of the checklist).
 
 ## How work flows
 

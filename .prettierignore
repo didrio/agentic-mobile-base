@@ -1,0 +1,12 @@
+node_modules/
+ios/
+android/
+.expo/
+dist/
+coverage/
+.artifacts/
+package-lock.json
+assets/app.icon/
+# Machine-written config (eas init, expo install, scripts/new-app) — keep in the tools' own JSON format.
+app.json
+eas.json

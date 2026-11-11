@@ -1,0 +1,22 @@
+# Launches the app from a clean state. Reuse at the top of every flow:
+#   - runFlow: subflows/launch.yaml
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+
+# Development builds: point the dev client at the local bundler (DEV_CLIENT_URL is set by
+# scripts/e2e.mjs; it's empty for preview/production builds).
+- runFlow:
+    when:
+      true: ${DEV_CLIENT_URL != ''}
+    commands:
+      - openLink: ${DEV_CLIENT_URL}
+      # The dev menu shows a one-time intro after a fresh install.
+      - tapOn:
+          text: 'Continue'
+          optional: true
+
+- extendedWaitUntil:
+    visible: 'Home'
+    timeout: 60000

@@ -1,0 +1,20 @@
+# Preview builds for testers (internal distribution: install via link/QR, no store review).
+# Run: npx eas-cli@latest workflow:run .eas/workflows/create-preview-builds.yml
+# Later JS-only changes reach these builds with: npm run update:preview -- --message "…"
+
+name: Create preview builds
+
+jobs:
+  android_preview_build:
+    name: Android preview (APK)
+    type: build
+    params:
+      platform: android
+      profile: preview
+
+  ios_preview_build:
+    name: iOS preview
+    type: build
+    params:
+      platform: ios
+      profile: preview

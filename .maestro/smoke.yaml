@@ -1,0 +1,18 @@
+# Smoke test: the app launches, both tabs render, and a setting can be changed.
+# Run with `npm run e2e` (see scripts/e2e.mjs). Docs: https://docs.maestro.dev
+appId: ${APP_ID}
+name: Smoke
+---
+- runFlow: subflows/launch.yaml
+
+- assertVisible: 'Start building'
+- takeScreenshot: .artifacts/maestro/home
+
+- tapOn: 'Settings'
+- assertVisible: 'Appearance'
+- tapOn: 'Dark'
+- assertVisible: 'Version'
+- takeScreenshot: .artifacts/maestro/settings-dark
+
+# Leave the device as we found it.
+- tapOn: 'System'

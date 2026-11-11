@@ -1,0 +1,138 @@
+import { Children, Fragment, isValidElement, type ReactNode } from 'react';
+import { Pressable, View } from 'react-native';
+
+import { makeStyles } from '@/theme';
+
+import { Icon, type IconName } from './icon';
+import { Text } from './text';
+
+export type ListSectionProps = {
+  title?: string;
+  footer?: string;
+  children: ReactNode;
+};
+
+/** An inset grouped list section (iOS Settings style). Separators are added between rows. */
+export function ListSection({ title, footer, children }: ListSectionProps) {
+  const styles = useStyles();
+  const rows = Children.toArray(children).filter(isValidElement);
+  return (
+    <View style={styles.section}>
+      {title ? (
+        <Text variant="footnote" color="textSecondary" style={styles.sectionLabel}>
+          {title.toUpperCase()}
+        </Text>
+      ) : null}
+      <View style={styles.sectionBody}>
+        {rows.map((row, index) => (
+          <Fragment key={row.key ?? index}>
+            {index > 0 ? <View style={styles.separator} /> : null}
+            {row}
+          </Fragment>
+        ))}
+      </View>
+      {footer ? (
+        <Text variant="footnote" color="textSecondary" style={styles.sectionLabel}>
+          {footer}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+export type ListRowProps = {
+  title: string;
+  /** Secondary text shown on the right (e.g. a current value). */
+  value?: string | null;
+  icon?: IconName;
+  /** Makes the row pressable and shows a chevron. */
+  onPress?: () => void;
+  /** Custom trailing element (switch, badge…). Replaces `value`. */
+  accessory?: ReactNode;
+  /** Allow long-press to copy the value (useful for IDs). */
+  selectable?: boolean;
+  testID?: string;
+};
+
+export function ListRow({
+  title,
+  value,
+  icon,
+  onPress,
+  accessory,
+  selectable,
+  testID,
+}: ListRowProps) {
+  const styles = useStyles();
+  const content = (
+    <>
+      {icon ? <Icon name={icon} size={20} color="primary" /> : null}
+      <Text style={styles.rowTitle} numberOfLines={1}>
+        {title}
+      </Text>
+      {accessory ??
+        (value != null ? (
+          <Text
+            color="textSecondary"
+            style={styles.rowValue}
+            numberOfLines={1}
+            ellipsizeMode="middle"
+            selectable={selectable}>
+            {value}
+          </Text>
+        ) : null)}
+      {onPress ? (
+        <Icon
+          name={{ ios: 'chevron.right', android: 'chevron_right' }}
+          size={14}
+          color="textTertiary"
+        />
+      ) : null}
+    </>
+  );
+
+  if (!onPress) {
+    return (
+      <View style={styles.row} testID={testID}>
+        {content}
+      </View>
+    );
+  }
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      testID={testID}
+      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
+      {content}
+    </Pressable>
+  );
+}
+
+const useStyles = makeStyles((t) => ({
+  section: { gap: t.spacing.sm },
+  sectionLabel: { paddingHorizontal: t.spacing.lg },
+  sectionBody: {
+    backgroundColor: t.colors.surface,
+    borderRadius: t.radius.lg,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  separator: {
+    height: 1,
+    marginLeft: t.spacing.lg,
+    backgroundColor: t.colors.border,
+    opacity: 0.6,
+  },
+  row: {
+    minHeight: 48,
+    paddingHorizontal: t.spacing.lg,
+    paddingVertical: t.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: t.spacing.md,
+  },
+  rowPressed: { backgroundColor: t.colors.surfacePressed },
+  rowTitle: { flexShrink: 0 },
+  rowValue: { flex: 1, textAlign: 'right' },
+}));

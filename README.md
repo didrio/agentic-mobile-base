@@ -1,56 +1,56 @@
-# Welcome to your Expo app 👋
+# Base
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A production-ready starting point for iOS + Android apps from one TypeScript codebase, built so both you and
+AI coding agents can move fast in it. Every new app idea starts here.
 
-## Get started
+**Stack:** Expo SDK 58 · React Native 0.88 (New Architecture) · React 19.3 + React Compiler · TypeScript ·
+Expo Router with native tabs · TanStack Query · zustand · zod · Jest + Testing Library · Maestro · EAS Build /
+Submit / Update.
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Quick start
 
 ```bash
-npm run reset-project
+npm install
+npm run doctor        # what this Mac can run (Expo Go, simulators, devices, cloud builds)
+npm run start:go      # then scan the QR code with the Expo Go app on your phone
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+With Xcode or the Android SDK installed: `npm run ios` / `npm run android`. Full guide, including real
+devices and one-command toolchain setup (`bash scripts/setup-mac.sh`): [docs/getting-started.md](docs/getting-started.md).
 
-### Other setup steps
+## Start a new app from this base
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npm pkg set config.bundleIdPrefix=com.yourname     # once
+npm run create-app -- ../my-app --name "My App"     # copy + rename + fresh git + install
+```
 
-## Learn more
+Then open the new folder with your coding agent and describe the idea. Checklist:
+[docs/new-app-checklist.md](docs/new-app-checklist.md).
 
-To learn more about developing your project with Expo, look at the following resources:
+## Everyday commands
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+| Command                                         | What it does                                                  |
+| ----------------------------------------------- | ------------------------------------------------------------- |
+| `npm start`                                     | Bundler for an installed development build                    |
+| `npm run start:go`                              | Bundler for Expo Go (zero native setup)                       |
+| `npm run ios` / `npm run android`               | Build + run the dev app on a simulator/emulator               |
+| `npm run ios:device` / `npm run android:device` | Same, on a USB-connected phone                                |
+| `npm run check`                                 | Typecheck, lint, format check, unit tests (what CI runs)      |
+| `npm run e2e`                                   | Maestro end-to-end flows                                      |
+| `npm run screenshot`                            | Save a screenshot of the running simulator/emulator           |
+| `npm run build:preview`                         | Cloud build for testers (install via link)                    |
+| `npm run release`                               | Production builds → TestFlight + Google Play internal testing |
+| `npm run update:production -- -m "…"`           | Over-the-air JS update to store users                         |
+| `npm run deploy`                                | Build+submit if native code changed, otherwise OTA update     |
 
-## Join the community
+## Docs
 
-Join our community of developers creating universal apps.
+- [Getting started](docs/getting-started.md) — running on simulators, emulators and phones
+- [Architecture](docs/architecture.md) — structure, styling, state, data fetching, testing
+- [Native code](docs/native.md) — native libraries, permissions, config plugins, Swift/Kotlin modules
+- [Releasing](docs/releasing.md) — testers, App Store, Google Play, OTA updates, automation
+- [Decisions](docs/decisions.md) — why each piece of the stack was chosen
+- [AGENTS.md](AGENTS.md) — the operating manual for AI coding agents (Claude Code reads it via CLAUDE.md)
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Placeholder icon and splash images come from Expo's MIT-licensed project template; replace them per app.

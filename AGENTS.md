@@ -1,41 +1,135 @@
-This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
+# AGENTS.md
 
-## Expo has changed — do not trust your training data
+Operating manual for coding agents working in this repo. Humans: see README.md.
 
-Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:
+This is a cross-platform **iOS + Android app** built with **Expo SDK 58** (React Native 0.88, React 19.3,
+TypeScript 6, New Architecture, Hermes, React Compiler). It started from a reusable "base" template, so it is
+deliberately small, conventional, and fully wired: navigation, theming, data layer, tests, E2E, CI, app variants,
+cloud builds, store submission and OTA updates.
 
-1. Read the major version of the `expo` package in `package.json`.
-2. Fetch the matching versioned docs: `https://docs.expo.dev/versions/v<major>.0.0/`
-3. For anything else, fetch https://docs.expo.dev/llms.txt — an index of all Expo docs with corrections to common LLM misconceptions. Follow its links to the specific page you need; never answer from memory.
+## Golden rules
+
+1. **Your training data is out of date for this stack.** Expo/RN APIs change every SDK. Before using an
+   Expo/RN/router API you're not certain of, check the installed types in `node_modules/<pkg>/build/*.d.ts` or
+   the versioned docs `https://docs.expo.dev/versions/v58.0.0/` (index for agents:
+   `https://docs.expo.dev/llms.txt`). Examples already bitten in this repo: `headerLargeTitle` →
+   `headerLargeTitleEnabled`; `Appearance.setColorScheme('auto')` (not `null`/`'unspecified'`); RNTL v14
+   `render`/`fireEvent` are **async**; `eas update` requires `--environment`.
+2. **Add runtime packages with `npx expo install <pkg>`**, never `npm install <pkg>` (it pins SDK-compatible
+   versions). Dev-only tools: `npm install -D`.
+3. **Never create or edit `ios/` or `android/`.** They're generated (Continuous Native Generation) and
+   git-ignored. Native config goes in `app.json` (+ config plugins). See `docs/native.md`.
+4. **Use the npm scripts**, not raw `expo` commands — they set `APP_VARIANT` correctly.
+5. **Definition of done:** `npm run check` passes (typecheck + lint + format + tests), and UI changes were
+   looked at on a simulator/emulator when one is available (`npm run screenshot`). Say clearly what you could not
+   verify.
+6. **Follow the structure and conventions below**; don't introduce a parallel pattern (another styling library,
+   state manager, folder scheme) without the user asking. `docs/decisions.md` explains the choices.
+7. **Ask before outward-facing actions**: store submissions, production OTA updates, `eas` commands that publish,
+   anything that costs money or is visible to users.
+8. When a feature needs a native module that **isn't in Expo Go**, tell the user it requires a development build
+   (and how to get one) before writing the code.
 
 ## Commands
 
-Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
+| Task                                      | Command                                                                                                                 |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| All checks (run before finishing)         | `npm run check`                                                                                                         |
+| Typecheck / lint / autofix / format       | `npm run typecheck` · `npm run lint` · `npm run lint:fix` · `npm run format`                                            |
+| Unit tests                                | `npm test` · `npm test -- src/features/home` · `npm run test:watch`                                                     |
+| What can this machine run?                | `npm run doctor`                                                                                                        |
+| Run on iOS Simulator / Android emulator   | `npm run ios` · `npm run android` (dev build, starts bundler)                                                           |
+| Run on a USB device                       | `npm run ios:device` · `npm run android:device`                                                                         |
+| Bundler only (dev build installed)        | `npm start`                                                                                                             |
+| Run in Expo Go (no native toolchain)      | `npm run start:go` (`-- --tunnel` if the phone is on another network)                                                   |
+| Screenshot the running simulator/emulator | `npm run screenshot` → prints a PNG path; open it to look                                                               |
+| E2E (Maestro)                             | `npm run e2e` (bundler must be running for dev builds)                                                                  |
+| Regenerate native projects                | `npm run native:clean` (after native config/dependency changes)                                                         |
+| Inspect resolved app config               | `npx expo config --type public` (prefix `APP_VARIANT=…` to switch)                                                      |
+| Expo dependency health                    | `npm run doctor:expo` · fix versions: `npx expo install --fix`                                                          |
+| Cloud builds / release / OTA              | `npm run build:dev` · `build:dev:sim` · `build:preview` · `release` · `update:preview` · `update:production` · `deploy` |
 
-```bash
-npx expo install <package>  # ALWAYS use instead of npm/yarn/pnpm/bun add — resolves SDK-compatible versions
-npx expo start              # start the dev server
-npx expo lint               # lint
-npx tsc --noEmit            # typecheck
-npx expo-doctor             # diagnose dependency and config issues
-npx expo install --fix      # fix incompatible package versions
+Skills with step-by-step playbooks live in `.claude/skills/` (plain Markdown — any agent can read them):
+`new-app`, `add-feature`, `add-native-capability`, `run-app`, `release`. Claude Code also gets Expo's official
+plugin (`expo@claude-plugins-official`: Expo/EAS skills + the Expo MCP server).
+
+## Project map
+
+```
+src/
+  app/                    Expo Router routes ONLY — file = URL. Keep these files thin.
+    _layout.tsx           Root: providers, root Stack, ErrorBoundary, one-time startup work
+    +not-found.tsx
+    (tabs)/_layout.tsx    Native tab bar (NativeTabs: Liquid Glass on iOS, Material 3 on Android)
+    (tabs)/(home)/        Home tab: _layout.tsx (Stack) + index.tsx
+    (tabs)/settings/      Settings tab: _layout.tsx (Stack) + index.tsx
+  features/<feature>/     Screens + feature components, hooks, api.ts, stores, tests (colocated)
+  components/ui/          Design-system primitives: Text, Button, Screen, Card, Icon, ListSection/ListRow, SegmentedControl
+  components/             App-level components (AppProviders, ErrorScreen)
+  lib/                    Infrastructure: api-client, query-client, storage, env, app-info
+  theme/                  Tokens (colors, spacing, radius, typography), useTheme, makeStyles
+assets/                   App icon (assets/app.icon = iOS 26 Icon Composer), Android adaptive icon, splash
+.maestro/                 E2E flows (YAML) + subflows/
+scripts/                  doctor, setup-mac.sh, screenshot, e2e, new-app, create-app (Node, no deps)
+.eas/workflows/           EAS Workflows: dev builds, preview builds, production deploy
+.github/workflows/ci.yml  CI: npm run check + bundle both platforms
+app.json                  App identity & static native config (single source of truth; tools write here)
+app.config.ts             Derives dev/preview/production variants from APP_VARIANT
+eas.json                  Build profiles, channels, submit config
+docs/                     getting-started, architecture, native, releasing, new-app-checklist, decisions
 ```
 
-Run lint and typecheck before declaring any task done.
+## Conventions
 
-## Navigation & Routing
+- **Routes are thin**: `export { FooScreen as default } from '@/features/foo/foo-screen';`. Screen options go
+  in the tab's `_layout.tsx` (`<Stack.Screen name="…" options={{ title }} />`).
+- **Files** kebab-case (`settings-screen.tsx`), **components** PascalCase named exports (default exports only
+  where Expo Router requires them). Import across folders via `@/…` (`@/assets/…` for assets).
+- **Styling**: `const useStyles = makeStyles((t) => ({ … }))` at the bottom of the file, using `t.colors.*`
+  (semantic names), `t.spacing.*`, `t.radius.*`. No hex colors or font sizes in features — add tokens in
+  `src/theme/tokens.ts` (both light and dark). Use `Text variant=… color=…`, not RN `Text` (lint enforces
+  this, plus `expo-image` over RN `Image` and safe-area-context over RN `SafeAreaView`).
+- **Icons**: `<Icon name={{ ios: 'gearshape', android: 'settings' }} />` (SF Symbols + Material Symbols; both
+  required). Tab icons: `NativeTabs.Trigger.Icon sf=… md=…`.
+- **State**: server data → TanStack Query; shared client state → zustand (persist via `zustandStorage` only if
+  it must survive restarts); local → `useState`. Don't copy server data into zustand.
+- **Storage**: `@/lib/storage` (sync KV on SQLite) for preferences; `expo-secure-store` for secrets;
+  `expo-sqlite` for structured data.
+- **API**: `api.get(path, zodSchema)` from `@/lib/api-client` — every response is validated; errors are
+  `ApiError` / `ApiResponseError`. Base URL from `EXPO_PUBLIC_API_URL` (`src/lib/env.ts`).
+- **Env vars**: only `EXPO_PUBLIC_*` reach the app, inlined at build time (never secrets). Add to `.env.example`
+  and `src/lib/env.ts`.
+- **React Compiler is on**: don't sprinkle `useMemo`/`useCallback`/`memo` for performance; follow the Rules of
+  React (lint flags violations).
+- **Accessibility**: interactive elements get `accessibilityRole` and a label (visible text counts). Tests query
+  by role/text, which keeps this honest.
+- **Tests** are colocated `*.test.ts(x)`. This project uses `@testing-library/react-native` v14, whose APIs can
+  differ from your training data: before writing or changing RNTL tests, read
+  `node_modules/@testing-library/react-native/docs/guides/llm-guidelines.md`. Native modules are mocked at the
+  boundary in `jest.setup.ts`. Some packages ship agent docs too, e.g.
+  `node_modules/expo-sqlite/skills/expo-sqlite/SKILL.md`.
 
-- Use **Expo Router** for all navigation. Routes live in `src/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) outside `src/app/`.
-- Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
-- Docs: https://docs.expo.dev/router/introduction.md
+## Verification loop
 
-## Building with EAS
+1. `npm run check` — fix everything it reports (the format hook already formats files you edit).
+2. If you touched UI and a simulator/emulator is available (`npm run doctor`): make sure the app is running
+   (`npm run ios` / `npm run android`, in the background), let it reload, then `npm run screenshot` and **look
+   at the image**. Check dark mode too when relevant.
+3. For user journeys, add/run a Maestro flow: `npm run e2e`.
+4. Changed native config or dependencies? `npm run native:clean` then rebuild; also run
+   `npx expo export --platform ios --platform android --output-dir /tmp/export` to prove both bundles build.
+5. Report what you verified and what you couldn't (e.g. "no Android emulator on this machine").
 
-Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
-Docs: https://docs.expo.dev/eas/index.md
+## Gotchas
 
-## Rules
-
-- If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
-- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
-- Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+- **Variants**: `APP_VARIANT` = `development` (local scripts, `.dev` bundle ID, "<Name> Dev"), `preview`,
+  `production` (default when unset). Switching variants for local native builds needs `npm run native:clean`.
+- **OTA updates** only reach builds with the same runtime fingerprint. Native changes ⇒ new store build.
+- **Expo Go** supports only the latest SDK and only its bundled native modules. `expo-dev-client` is installed,
+  so `npm start` targets dev builds; use `npm run start:go` for Expo Go.
+- **Typed routes**: new routes get types when the dev server runs (`.expo/types`); restart `npm start` if `tsc`
+  doesn't know a new route.
+- Installed-but-unused capabilities ready to use: `@expo/ui` (SwiftUI / Jetpack Compose components),
+  `expo-glass-effect` (Liquid Glass views), `expo-web-browser`, `expo-device`, `expo-haptics`, `expo-image`.
+- Web is intentionally not a target (`platforms: ["ios", "android"]`). Adding it later:
+  `npx expo install react-dom react-native-web` and add `"web"` to `platforms`.

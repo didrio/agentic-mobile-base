@@ -164,8 +164,8 @@ TICKETS.md                Ordered, living backlog; one ticket per session (/star
 - **OTA updates** only reach builds with the same runtime fingerprint. Native changes ⇒ new store build.
 - **Expo Go** supports only the latest SDK and only its bundled native modules. `expo-dev-client` is installed,
   so `npm start` targets dev builds; use `npm run start:go` for Expo Go.
-- **Typed routes**: new routes get types when the dev server runs (`.expo/types`); restart `npm start` if `tsc`
-  doesn't know a new route.
+- **Typed routes**: `npm run typecheck` regenerates the route types (`.expo/types`) before running `tsc`, so new
+  routes are known without the dev server. Plain `npx tsc` can see stale routes.
 - Installed-but-unused capabilities ready to use: `@expo/ui` (SwiftUI / Jetpack Compose components),
   `expo-glass-effect` (Liquid Glass views), `expo-web-browser`, `expo-device`, `expo-haptics`, `expo-image`.
 - Web is intentionally not a target (`platforms: ["ios", "android"]`). Adding it later:

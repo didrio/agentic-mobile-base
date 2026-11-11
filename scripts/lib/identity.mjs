@@ -1,7 +1,13 @@
 /**
  * Shared helpers for giving a copy of this base its own identity (name, IDs, scheme).
- * Used by scripts/new-app.mjs (rename in place) and scripts/create-app.mjs (copy to a new folder).
+ * Used by scripts/new-app.mjs (in place) and scripts/create-app.mjs (copy to a new folder).
+ *
+ * Two modes:
+ * - fresh: a copy that is still the base (its TICKETS.md is the base's own backlog). It becomes a new app:
+ *   new identity, version 1.0.0, no EAS link, a fresh TICKETS.md and an app README intro.
+ * - rename: an existing app. Only the identity fields you pass change; the backlog, version and EAS link stay.
  */
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
@@ -12,6 +18,9 @@ const JAVA_KEYWORDS = new Set(
     ' ',
   ),
 );
+
+/** First line of the base's own TICKETS.md; apps get `# Tickets — <App name>` from the template. */
+const BASE_TICKETS_TITLE = '# Tickets — Base';
 
 export function slugify(name) {
   return name
@@ -39,7 +48,7 @@ export function defaultBundleId(root, slug) {
   let prefix = process.env.BUNDLE_ID_PREFIX;
   if (!prefix) {
     try {
-      prefix = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).config?.bundleIdPrefix;
+      prefix = readJson(join(root, 'package.json')).config?.bundleIdPrefix;
     } catch {
       // ignore
     }
@@ -48,10 +57,22 @@ export function defaultBundleId(root, slug) {
 }
 
 /**
- * Resolves name / slug / bundle ID from CLI values, prompting for anything missing when attached
- * to a terminal. Throws with a helpful message otherwise.
+ * True while `root` is still the base (or a plain clone of it): TICKETS.md is missing or is the base's own
+ * backlog, so the backlog, EAS link and version belong to the base and must be replaced. False in an app.
  */
-export async function resolveIdentity(root, { name, slug, id }) {
+export function isFreshCopyOfBase(root) {
+  const tickets = join(root, 'TICKETS.md');
+  return !existsSync(tickets) || readFileSync(tickets, 'utf8').startsWith(BASE_TICKETS_TITLE);
+}
+
+/**
+ * Resolves name / slug / bundle ID from CLI values. Fresh copies prompt for anything missing when attached to
+ * a terminal; renames never prompt and keep the current value of anything not passed. Throws with a helpful
+ * message otherwise.
+ */
+export async function resolveIdentity(root, { name, slug, id }, { fresh = true } = {}) {
+  if (!fresh) return resolveRename(root, { name, slug, id });
+
   const interactive = process.stdin.isTTY && process.stdout.isTTY;
   const rl = interactive ? createInterface({ input: process.stdin, output: process.stdout }) : null;
   try {
@@ -61,8 +82,6 @@ export async function resolveIdentity(root, { name, slug, id }) {
       if (!name) throw new Error('An app name is required.');
     }
     slug ||= slugify(name);
-    if (!/^[a-z0-9][a-z0-9-]*$/.test(slug))
-      throw new Error(`Invalid slug "${slug}" (use a-z, 0-9, -)`);
     if (!id) {
       const suggestion = defaultBundleId(root, slug);
       if (rl) {
@@ -71,12 +90,38 @@ export async function resolveIdentity(root, { name, slug, id }) {
         id = suggestion;
       }
     }
-    const error = bundleIdError(id);
-    if (error) throw new Error(`Invalid bundle ID "${id}": ${error}`);
-    return { name, slug, id, scheme: slug };
+    return validated({ name, slug, id });
   } finally {
     rl?.close();
   }
+}
+
+function resolveRename(root, values) {
+  const { expo } = readJson(join(root, 'app.json'));
+  const name = values.name || expo.name;
+  const slug = values.slug || expo.slug;
+  const id = values.id || expo.ios?.bundleIdentifier;
+  if (name === expo.name && slug === expo.slug && id === expo.ios?.bundleIdentifier) {
+    throw new Error(
+      `Nothing to change: this app is already ${expo.name} (${id}). Pass --name, --id and/or --slug.`,
+    );
+  }
+  if (expo.extra?.eas?.projectId && slug !== expo.slug) {
+    throw new Error(
+      `The slug "${expo.slug}" is tied to this app's EAS project, so it can't change here. ` +
+        'Rename without --slug (the display name and bundle ID can still change).',
+    );
+  }
+  return validated({ name, slug, id });
+}
+
+function validated({ name, slug, id }) {
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) {
+    throw new Error(`Invalid slug "${slug}" (use a-z, 0-9, -)`);
+  }
+  const error = bundleIdError(id);
+  if (error) throw new Error(`Invalid bundle ID "${id}": ${error}`);
+  return { name, slug, id, scheme: slug };
 }
 
 function readJson(path) {
@@ -87,80 +132,146 @@ function writeJson(path, value) {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 }
 
-/** Writes the identity into app.json / package.json / README and unlinks the base's EAS project. */
-export function applyIdentity(root, { name, slug, id, scheme }) {
+/** The README intro an app starts with, replacing the base-only blocks of the base's README. */
+function appReadmeIntro(name) {
+  return [
+    `_What ${name} is and who it's for: written during T1._`,
+    '',
+    'Created from the base template; `npm run sync-base` pulls in later base improvements (see',
+    '[docs/new-app-checklist.md](docs/new-app-checklist.md)).',
+  ].join('\n');
+}
+
+/**
+ * Writes the identity into app.json / package.json / README. Fresh copies also get version 1.0.0, lose the
+ * base's EAS link, and start a new TICKETS.md and README intro.
+ */
+export function applyIdentity(root, { name, slug, id, scheme }, { fresh = true } = {}) {
   const appJsonPath = join(root, 'app.json');
   const appJson = readJson(appJsonPath);
   const expo = appJson.expo;
   expo.name = name;
   expo.slug = slug;
   expo.scheme = scheme;
-  expo.version = '1.0.0';
   expo.ios = { ...expo.ios, bundleIdentifier: id };
   expo.android = { ...expo.android, package: id };
-  // A new app gets its own EAS project: drop links that belong to the base.
-  delete expo.owner;
-  if (expo.extra) {
-    delete expo.extra.eas;
-    // Derived at config time (app.config.ts / expo-router plugin); EAS CLI sometimes persists them.
-    delete expo.extra.appVariant;
-    delete expo.extra.router;
-    if (Object.keys(expo.extra).length === 0) delete expo.extra;
-  }
-  if (expo.updates) {
-    delete expo.updates.url;
-    if (Object.keys(expo.updates).length === 0) delete expo.updates;
+  if (fresh) {
+    expo.version = '1.0.0';
+    // A new app gets its own EAS project: drop links that belong to the base.
+    delete expo.owner;
+    if (expo.extra) {
+      delete expo.extra.eas;
+      // Derived at config time (app.config.ts / expo-router plugin); EAS CLI sometimes persists them.
+      delete expo.extra.appVariant;
+      delete expo.extra.router;
+      if (Object.keys(expo.extra).length === 0) delete expo.extra;
+    }
+    if (expo.updates) {
+      delete expo.updates.url;
+      if (Object.keys(expo.updates).length === 0) delete expo.updates;
+    }
   }
   writeJson(appJsonPath, appJson);
 
   const pkgPath = join(root, 'package.json');
   const pkg = readJson(pkgPath);
   pkg.name = slug;
-  pkg.version = '1.0.0';
+  if (fresh) pkg.version = '1.0.0';
   writeJson(pkgPath, pkg);
 
   const lockPath = join(root, 'package-lock.json');
   if (existsSync(lockPath)) {
     const lock = readJson(lockPath);
     lock.name = slug;
-    lock.version = '1.0.0';
-    if (lock.packages?.['']) {
-      lock.packages[''].name = slug;
-      lock.packages[''].version = '1.0.0';
+    if (lock.packages?.['']) lock.packages[''].name = slug;
+    if (fresh) {
+      lock.version = '1.0.0';
+      if (lock.packages?.['']) lock.packages[''].version = '1.0.0';
     }
     writeJson(lockPath, lock);
   }
 
   const readmePath = join(root, 'README.md');
   if (existsSync(readmePath)) {
-    const readme = readFileSync(readmePath, 'utf8');
-    writeFileSync(readmePath, readme.replace(/^# .*$/m, `# ${name}`));
+    let readme = readFileSync(readmePath, 'utf8').replace(/^# .*$/m, `# ${name}`);
+    if (fresh) {
+      // The first base-only block (the intro) becomes the app's intro; the others are removed.
+      let first = true;
+      readme = readme.replace(/<!-- base-only:start -->[\s\S]*?<!-- base-only:end -->\n*/g, () => {
+        const replacement = first ? `${appReadmeIntro(name)}\n\n` : '';
+        first = false;
+        return replacement;
+      });
+    }
+    writeFileSync(readmePath, readme);
   }
 
-  // A new app starts its own backlog (the base's TICKETS.md is about the base itself).
-  const ticketsTemplate = join(root, 'scripts/templates/TICKETS.md');
-  if (existsSync(ticketsTemplate)) {
-    const today = new Date().toISOString().slice(0, 10);
-    const tickets = readFileSync(ticketsTemplate, 'utf8')
-      .replaceAll('{{APP_NAME}}', name)
-      .replaceAll('{{DATE}}', today);
-    writeFileSync(join(root, 'TICKETS.md'), tickets);
+  const ticketsPath = join(root, 'TICKETS.md');
+  if (fresh) {
+    // A new app starts its own backlog (the base's TICKETS.md is about the base itself).
+    const ticketsTemplate = join(root, 'scripts/templates/TICKETS.md');
+    if (existsSync(ticketsTemplate)) {
+      const today = new Date().toISOString().slice(0, 10);
+      const tickets = readFileSync(ticketsTemplate, 'utf8')
+        .replaceAll('{{APP_NAME}}', name)
+        .replaceAll('{{DATE}}', today);
+      writeFileSync(ticketsPath, tickets);
+    }
+  } else if (existsSync(ticketsPath)) {
+    writeFileSync(
+      ticketsPath,
+      readFileSync(ticketsPath, 'utf8').replace(/^# Tickets — .*$/m, `# Tickets — ${name}`),
+    );
   }
 }
 
-export function printNextSteps({ name, id }, { cdPath } = {}) {
-  const lines = [
-    '',
-    `✓ ${name} (${id}) is ready.`,
-    '',
+function gitOutput(root, args) {
+  try {
+    return execFileSync('git', args, {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+  } catch {
+    return null;
+  }
+}
+
+/** What to do after a fresh copy: GitHub repo, open in Claude Code, /start T1, and what the human does. */
+export function printNextSteps({ name, id, slug }, { root, cdPath } = {}) {
+  const origin = root ? gitOutput(root, ['remote', 'get-url', 'origin']) : null;
+  const steps = [];
+  if (!origin) {
+    // create-app prints this from the base folder, so the command starts by moving into the app.
+    const cd =
+      cdPath && cdPath !== '.' ? `cd ${/\s/.test(cdPath) ? `"${cdPath}"` : cdPath} && ` : '';
+    steps.push(
+      'Recommended: a private GitHub repo (CI + backup; /wrap pushes every session once it exists):\n' +
+        `     ${cd}gh repo create ${slug} --private --source . --remote origin && git push -u origin main`,
+    );
+  }
+  steps.push(
+    `Open ${cdPath ?? 'this folder'} in your editor with Claude Code`,
+    'Model: Opus · Effort: high · Plan mode: on',
+    '/start T1 — Shape the app (describe your idea; the agent plans it and writes the next tickets)',
+  );
+
+  const lines = ['', `✓ ${name} (${id}) is ready.`, ''];
+  if (origin) {
+    lines.push(
+      `! This checkout pushes to ${origin}. If that is the base's repository, run`,
+      '    git remote rename origin base && git branch --unset-upstream',
+      "  so /wrap doesn't push the app into the base (then `npm run sync-base` uses it as the base).",
+      '',
+    );
+  }
+  lines.push(
     'Next steps:',
-    `  1. Open ${cdPath ?? 'this folder'} in your editor with Claude Code`,
-    '  2. Model: Opus · Effort: high · Plan mode: on',
-    '  3. /start T1 — Shape the app (describe your idea; the agent plans it and writes the next tickets)',
+    ...steps.map((step, index) => `  ${index + 1}. ${step}`),
     '',
-    'Handy along the way: npm run doctor · npm run ios / android · npx eas-cli@latest init (own EAS project)',
-    'Later: npm run sync-base pulls in improvements made to the base (see docs/new-app-checklist.md)',
+    "You'll be needed for: the app idea, icon/splash artwork, and the Apple login on the first iOS build.",
+    'Who does what, and the full checklist: docs/new-app-checklist.md',
     '',
-  ];
+  );
   console.log(lines.join('\n'));
 }

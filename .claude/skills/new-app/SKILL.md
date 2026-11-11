@@ -1,6 +1,6 @@
 ---
 name: new-app
-description: Start a brand-new app from this base — set its identity (name, bundle ID), clear the starter content, and turn the user's app idea into a first working version. Use when the user describes a new app idea, says "start a new app/project", or asks to rename/rebrand this base.
+description: Start a brand-new app from this base — set its identity (name, bundle ID), clear the starter content, and turn the user's app idea into a first working version. Use when the user describes a new app idea, says "start a new app/project", or asks to rename/rebrand the app.
 ---
 
 # Start a new app from the base
@@ -18,15 +18,25 @@ Goal: in one session, go from "app idea" to a running, testable first version th
 
 Pick the case that matches where you are:
 
-- **Already in the new app's own folder/repo** (cloned or "Use this template"):
-  `npm run new-app -- --name "Habit Tracker" --id com.yourname.habittracker`
+- **In an app made with `create-app`** (the usual case for `/start T1`): the identity is already applied. Check
+  `app.json` (name, `ios.bundleIdentifier`) and skip this step unless the name or ID should change.
 - **Inside the base repo itself, making a sibling project:**
   `npm run create-app -- ../habit-tracker --name "Habit Tracker" --id com.yourname.habittracker`
-  (clones the base with its history and keeps it as the `base` remote for `npm run sync-base`, then `npm ci`). Then continue working in the new folder.
+  (clones the base with its history and keeps it as the `base` remote for `npm run sync-base`, then `npm ci`).
+  Then continue working in the new folder.
+- **In a plain clone of the base** (its `TICKETS.md` is still "Tickets — Base"):
+  `npm run new-app -- --name "Habit Tracker" --id com.yourname.habittracker`. Follow its warning if `origin`
+  still points at the base's repository.
+- **Renaming an existing app:** `npm run new-app -- --name "New Name"` (and/or `--id …`). In an app it only
+  renames: `TICKETS.md`, the version and the EAS link stay, and it refuses to change the slug once EAS is linked.
 
-Both update `app.json`, `package.json`, `package-lock.json`, the README title, and unlink any EAS project.
-Never edit the bundle ID by hand in more than one place — `app.json` is the single source; `app.config.ts`
-derives the `.dev` / `.preview` variants.
+A fresh copy gets its identity in `app.json`, `package.json`, `package-lock.json` and the README, version 1.0.0,
+no EAS link, and a new `TICKETS.md`. Never edit the bundle ID by hand in more than one place — `app.json` is the
+single source; `app.config.ts` derives the `.dev` / `.preview` variants.
+
+No `origin` remote yet (`git remote -v`)? Offer a private GitHub repo — ask first, it's outward-facing:
+`gh repo create <slug> --private --source . --remote origin && git push -u origin main`. CI then runs on every
+push and `/wrap` pushes each session.
 
 ## 3. Shape the starter content
 

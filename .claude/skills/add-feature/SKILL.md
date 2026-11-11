@@ -25,9 +25,9 @@ export { ItemDetailScreen as default } from '@/features/items/item-detail-screen
 
 Set titles/options in the tab's `_layout.tsx` (`<Stack.Screen name="[id]" options={{ title: 'Item' }} />`)
 or from the screen with `<Stack.Screen options={...} />` when they depend on data.
-Typed routes are on: `router.push('/items/42')` and `<Link href=...>` are type-checked. The route types
-(`.expo/types`) regenerate while the dev server runs — if `tsc` says a new route doesn't exist, start `npm start`
-briefly and re-run the typecheck.
+Typed routes are on: `router.push('/items/42')` and `<Link href=...>` are type-checked. `npm run typecheck`
+regenerates the route types (`.expo/types`) first, so new routes are known without the dev server (plain
+`npx tsc` may not know them yet).
 
 ## 2. Feature folder
 

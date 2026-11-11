@@ -2,25 +2,42 @@
 
 From this base to your own app. The `new-app` agent skill walks through the same steps.
 
+## Who does what
+
+| You                                                                                             | The agent                                                         |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| The idea, the app name, the bundle ID (permanent once on a store)                               | Plans it with you, builds, tests, screenshots, keeps `TICKETS.md` |
+| Icon and splash artwork (iOS icon in Apple's Icon Composer)                                     | Wires the artwork and colors into `app.json` and the theme        |
+| At the keyboard for the Apple login on the app's first iOS build; `device:create` per new phone | Android builds, emulator installs, preview OTA updates            |
+| Accounts and fees (Apple Developer, Play Console), store listings, privacy policy URL           | Store checklists and metadata drafts                              |
+| Approving anything public: store submissions, production updates, pushes                        | Asks before any of those                                          |
+
+Devices and the Apple distribution certificate set up for an earlier app are reused; each new app only adds its
+own App ID and provisioning profile (EAS creates them on the first iOS build).
+
 ## 1. Create it
 
 ```bash
-# once: your reverse-DNS prefix for bundle IDs
-npm pkg set config.bundleIdPrefix=com.yourname
-
-# from the base repo: clones the base (with its history) into a new folder, renames it, installs dependencies
+# from the base repo: clones the base (with its history) into a new folder, renames it, commits, installs
 npm run create-app -- ../habit-tracker --name "Habit Tracker"
 
-# …or, if you already cloned the base into the new repo:
-npm run new-app -- --name "Habit Tracker" --id com.yourname.habittracker
+# recommended: a private GitHub repo for the app (CI + backup; /wrap pushes every session once it exists)
+cd ../habit-tracker && gh repo create habit-tracker --private --source . --remote origin && git push -u origin main
 ```
 
-This sets the name, slug, URL scheme, iOS bundle ID and Android package (`app.json`), the package name, and the
-README title, removes any EAS project link inherited from the base, and starts a fresh `TICKETS.md`.
-`create-app` commits that on top of the base's history and keeps the base as the `base` remote, so the app can
-pull later base improvements (section 5). Only committed base changes are included. Then open
-the folder in Claude Code (Opus, high effort, plan mode on) and run `/start T1`: that session works through
+Bundle IDs default to `com.didrio.<slug>` (`config.bundleIdPrefix` in the base's `package.json`); pass
+`--id com.didrio.something` to choose another. `create-app` sets the name, slug, URL scheme, iOS bundle ID and
+Android package (`app.json`), the package name and the README title/intro, removes the base's EAS project link,
+and starts a fresh `TICKETS.md`. It commits that on top of the base's history and keeps the base as the `base`
+remote, so the app can pull later base improvements (section 5). Only committed base changes are included. Then
+open the folder in Claude Code (Opus, high effort, plan mode on) and run `/start T1`: that session works through
 the rest of this checklist with you.
+
+- **Cloned the base yourself** (instead of `create-app`)? Run `npm run new-app -- --name "Habit Tracker"` in the
+  clone. If `origin` still points at the base's repository, it tells you to rename it to `base` so `/wrap` never
+  pushes the app into the base.
+- **Renaming later:** `npm run new-app -- --name "New Name"` (and/or `--id …`) inside the app only changes what
+  you pass; `TICKETS.md`, the version and the EAS link stay. The slug can't change once EAS is linked.
 
 ## 2. Make it yours
 
@@ -39,6 +56,8 @@ the rest of this checklist with you.
 
 ## 3. Connect services
 
+- [ ] GitHub repo (if not created in section 1): `gh repo create <slug> --private --source . --remote origin`,
+      then `git push -u origin main`. CI (`.github/workflows/ci.yml`) runs on every push.
 - [ ] `npx eas-cli@latest init` and `npx eas-cli@latest update:configure`, then the first preview build and OTA
       check: "First preview build (once per app)" in `docs/releasing.md`. `/start T1` adds a ticket for it.
 - [ ] Backend: set `EXPO_PUBLIC_API_URL` in `.env` (copy `.env.example`) and for EAS (`eas env:create`).

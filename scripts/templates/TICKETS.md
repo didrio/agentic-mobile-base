@@ -24,7 +24,8 @@ _None._
   - [ ] The starter Home is replaced by the app's first real screen, with a test, and `.maestro/smoke.yaml` checks it.
   - [ ] T2+ written here in order, each detailed enough for a fresh session to start without re-investigating.
 - **Context:** Follow the `new-app` skill. Created from the base on {{DATE}}; everything generic (tooling,
-  design system, delivery) is already set up — see `AGENTS.md`.
+  design system, delivery) is already set up — see `AGENTS.md`. If there's no `origin` remote yet, offer the
+  private GitHub repo command from the skill (ask first: it's outward-facing).
 
 ## Backlog
 

@@ -8,7 +8,7 @@
  *   npm run create-app -- ../habit-tracker          # prompts for name / ID
  *
  * Options: --name, --id, --slug, --no-install
- * Tip: set your default ID prefix once with `npm pkg set config.bundleIdPrefix=com.yourname`.
+ * The default ID is `config.bundleIdPrefix` (package.json) + the slug; change the prefix there and commit it.
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
@@ -51,33 +51,35 @@ const target = resolve(process.cwd(), targetArg);
 if (existsSync(target) && readdirSync(target).length > 0)
   fail(`${target} already exists and is not empty.`);
 
-let baseSha;
+// Which base the app starts from: the release tag (e.g. v1.0.0, v1.0.0-3-gabc1234) or the commit.
+let baseVersion;
 try {
-  baseSha = git(['rev-parse', '--short', `refs/heads/${BASE_BRANCH}`], source);
+  baseVersion = git(['describe', '--tags', '--always', `refs/heads/${BASE_BRANCH}`], source);
 } catch {
   fail(`The base has no "${BASE_BRANCH}" branch to create the app from.`);
 }
 
 if (git(['status', '--porcelain'], source)) {
   console.warn(
-    `! The base has uncommitted changes. They are NOT included (the app is cloned from ${BASE_BRANCH} @ ${baseSha}).\n` +
+    `! The base has uncommitted changes. They are NOT included (the app is cloned from ${BASE_BRANCH} @ ${baseVersion}).\n` +
       '  Commit them in the base and run `npm run sync-base` in the app to bring them over later.',
   );
 }
 
 let identity;
 try {
-  identity = await resolveIdentity(source, {
-    ...values,
-    slug: values.slug ?? (values.name ? undefined : slugify(basename(target))),
-  });
+  identity = await resolveIdentity(
+    source,
+    { ...values, slug: values.slug ?? (values.name ? undefined : slugify(basename(target))) },
+    { fresh: true },
+  );
 } catch (error) {
   fail(error.message);
 }
 
 const run = (cmd, args) => execFileSync(cmd, args, { cwd: target, stdio: 'inherit' });
 
-console.log(`Cloning the base (${BASE_BRANCH} @ ${baseSha}) → ${target}`);
+console.log(`Cloning the base (${BASE_BRANCH} @ ${baseVersion}) → ${target}`);
 execFileSync(
   'git',
   ['clone', '--quiet', '--origin', 'base', '--branch', BASE_BRANCH, source, target],
@@ -86,13 +88,13 @@ execFileSync(
 // `git pull` must not merge the base behind sync-base's back; the app's own `origin` comes later.
 run('git', ['branch', '--quiet', '--unset-upstream']);
 
-applyIdentity(target, identity);
+applyIdentity(target, identity, { fresh: true });
 
 run('git', ['add', '-A']);
 try {
   execFileSync(
     'git',
-    ['commit', '--quiet', '-m', `Create ${identity.name} from base (${baseSha})`],
+    ['commit', '--quiet', '-m', `Create ${identity.name} from base (${baseVersion})`],
     {
       cwd: target,
       stdio: 'ignore',
@@ -110,5 +112,6 @@ if (!values['no-install']) {
 
 const relativeTarget = relative(process.cwd(), target);
 printNextSteps(identity, {
+  root: target,
   cdPath: relativeTarget.startsWith('../..') ? target : relativeTarget || '.',
 });

@@ -5,7 +5,8 @@ Living, ordered backlog for the **base template itself** (apps created from it g
 wraps a session updates this file and picks the next ticket. Rules: `.claude/skills/wrap/SKILL.md`. Capture ideas
 any time with `/ticket`.
 
-**Next:** none queued. Pick from Backlog or add tickets with `/ticket`.
+**Next:** none queued in the base (v1.0.0). Build the first real app: `npm run create-app -- ../my-app --name "My
+App"`, then `/start T1` in the new folder. Base ideas: Backlog below, or `/ticket`.
 
 ## In progress
 
@@ -39,3 +40,6 @@ _None._
   ("First preview build"), `release` skill, and a "First preview build" ticket in every new app (`new-app`).
 - T5 — Expo MCP tried — 2026-11-11 — docs search, EAS status and router sitemap are useful; local device automation failed ("No platform found"), so the screenshot + Maestro loop stays; documented in `run-app` and AGENTS.md.
 - T6 — Android build tools in setup-mac — 2026-11-11 — setup installs NDK (from RN catalog), CMake 3.22.1 and build-tools 36.0.0 (AGP defaults, env-overridable) so the first Gradle build is faster.
+- T7 — Pre-v1 audit — 2026-11-11 — bundle ID prefix `com.didrio`; `new-app` in an existing app only renames
+  (keeps backlog, version, EAS link; slug locked once EAS-linked); app README intro via `base-only` markers;
+  "Who does what" + private GitHub repo step; `typecheck` regenerates typed routes; tagged `v1.0.0`.

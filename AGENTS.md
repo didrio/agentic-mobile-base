@@ -50,8 +50,38 @@ cloud builds, store submission and OTA updates.
 | Cloud builds / release / OTA              | `npm run build:dev` · `build:dev:sim` · `build:preview` · `release` · `update:preview` · `update:production` · `deploy` |
 
 Skills with step-by-step playbooks live in `.claude/skills/` (plain Markdown — any agent can read them):
-`new-app`, `add-feature`, `add-native-capability`, `run-app`, `release`. Claude Code also gets Expo's official
-plugin (`expo@claude-plugins-official`: Expo/EAS skills + the Expo MCP server).
+`start`, `wrap`, `ticket` (the session workflow below), `new-app`, `add-feature`, `add-native-capability`,
+`run-app`, `release`. Claude Code also gets Expo's official plugin (`expo@claude-plugins-official`: Expo/EAS
+skills + the Expo MCP server).
+
+## How work flows: tickets and sessions
+
+Work is planned in **`TICKETS.md`**, an ordered, living backlog (T1, T2, …), and done **one ticket per session**:
+
+1. **`/start T5`** (or `/start` to get a recommendation): read `TICKETS.md`, then only the files the ticket
+   points to, and work toward its **Done when** checklist.
+2. **`/ticket …`** at any point captures new ideas or scope creep as tickets instead of growing the current one.
+3. **`/wrap`**: final checks, update `TICKETS.md` (outcomes, handoff notes, new tickets, the **Next:** pick with
+   recommended model, effort and plan mode), commit, and print the next session's steps. The user then runs
+   `/clear` and starts the next session.
+
+Whoever wraps a session has the most context, so they write the handoff. That keeps every new session small,
+focused and cheap. Without slash commands, follow `.claude/skills/<name>/SKILL.md` when asked to start or wrap.
+Keep the user oriented throughout: say what's done, and suggest the next step or command.
+
+## Working efficiently
+
+The aim is the best ratio of quality to cost and time, with the user in the loop.
+
+- **Context is the main cost.** Read what the task needs, not the whole repo; prefer targeted searches over
+  dumping large files. Start new tickets in fresh sessions.
+- **Fast checks while working, the full check at the end**: `npm run typecheck`, `npm test -- <path>` during the
+  work; `npm run check` before wrapping.
+- **Screenshots cost tokens.** Take them when the UI changed, of the screens that changed, not after every edit.
+- **Rebuild native only when native inputs changed** (packages with native code, `app.json` plugins or
+  permissions). JS changes hot-reload.
+- **Spend more where it pays off**: data model, navigation structure, native setup, auth and anything else that's
+  expensive to change later deserve more thought and a plan; routine UI work doesn't.
 
 ## Project map
 
@@ -70,13 +100,15 @@ src/
   theme/                  Tokens (colors, spacing, radius, typography), useTheme, makeStyles
 assets/                   App icon (assets/app.icon = iOS 26 Icon Composer), Android adaptive icon, splash
 .maestro/                 E2E flows (YAML) + subflows/
-scripts/                  doctor, setup-mac.sh, screenshot, e2e, new-app, create-app (Node, no deps)
+scripts/                  doctor, setup-mac.sh, screenshot, e2e, new-app, create-app (Node, no deps);
+                          lib/ (identity, devices), templates/TICKETS.md (fresh backlog for new apps)
 .eas/workflows/           EAS Workflows: dev builds, preview builds, production deploy
 .github/workflows/ci.yml  CI: npm run check + bundle both platforms
 app.json                  App identity & static native config (single source of truth; tools write here)
 app.config.ts             Derives dev/preview/production variants from APP_VARIANT
 eas.json                  Build profiles, channels, submit config
 docs/                     getting-started, architecture, native, releasing, new-app-checklist, decisions
+TICKETS.md                Ordered, living backlog; one ticket per session (/start → /wrap)
 ```
 
 ## Conventions

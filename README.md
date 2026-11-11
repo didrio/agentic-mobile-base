@@ -25,8 +25,19 @@ npm pkg set config.bundleIdPrefix=com.yourname     # once
 npm run create-app -- ../my-app --name "My App"     # copy + rename + fresh git + install
 ```
 
-Then open the new folder with your coding agent and describe the idea. Checklist:
+Then open the new folder in Claude Code (Opus, high effort, plan mode on) and run `/start T1`: describe the idea,
+and the agent plans it, builds the first slice and writes the backlog. Checklist:
 [docs/new-app-checklist.md](docs/new-app-checklist.md).
+
+## How work flows
+
+Work is tracked in [TICKETS.md](TICKETS.md), an ordered, living backlog, and done one ticket per session:
+
+1. `/clear`, then pick the model, effort and plan mode the ticket recommends.
+2. `/start T5` (or just `/start` for a recommendation).
+3. Work with the agent; `/ticket <idea>` captures anything for later.
+4. `/wrap`: final checks, the backlog is updated for the next session, everything is committed, and you get the
+   exact steps for the next session.
 
 ## Everyday commands
 

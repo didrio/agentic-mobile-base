@@ -17,6 +17,8 @@ export function SettingsScreen() {
   const preference = useAppearanceStore((state) => state.preference);
   const setPreference = useAppearanceStore((state) => state.setPreference);
   const { updates } = appInfo;
+  // OTA update details only mean something in release builds (dev builds load JS from the bundler).
+  const showUpdates = updates.enabled && appInfo.runtime === 'release-build';
 
   return (
     <Screen grouped>
@@ -40,11 +42,11 @@ export function SettingsScreen() {
         />
         <ListRow title="Variant" value={appInfo.variant} />
         <ListRow title="Runtime" value={runtimeLabels[appInfo.runtime]} />
-        {updates.enabled ? <ListRow title="Update channel" value={updates.channel ?? '—'} /> : null}
-        {updates.enabled ? (
+        {showUpdates ? <ListRow title="Update channel" value={updates.channel || '—'} /> : null}
+        {showUpdates ? (
           <ListRow
             title="Update"
-            value={updates.isEmbeddedLaunch ? 'Embedded bundle' : updates.updateId}
+            value={updates.isEmbeddedLaunch ? 'Embedded bundle' : updates.updateId || '—'}
             selectable
           />
         ) : null}

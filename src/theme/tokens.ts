@@ -19,8 +19,10 @@ export const lightColors = {
   background: '#FFFFFF',
   /** Grouped/secondary background (iOS "systemGroupedBackground"). */
   backgroundGrouped: '#F2F2F7',
-  /** Cards, rows and other surfaces that sit on `background`/`backgroundGrouped`. */
+  /** List rows and panels on a grouped screen (`backgroundGrouped`). */
   surface: '#FFFFFF',
+  /** Filled panels (e.g. `Card`) on a plain screen (`background`). */
+  surfaceMuted: '#F2F2F7',
   /** Pressed / selected surface. */
   surfacePressed: '#E5E5EA',
   text: '#000000',
@@ -41,6 +43,7 @@ export const darkColors: ThemeColors = {
   background: '#000000',
   backgroundGrouped: '#000000',
   surface: '#1C1C1E',
+  surfaceMuted: '#1C1C1E',
   surfacePressed: '#2C2C2E',
   text: '#FFFFFF',
   textSecondary: '#AEAEB2',

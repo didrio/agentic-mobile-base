@@ -5,7 +5,7 @@
  *
  *   npm run screenshot                 # auto-detect (booted iOS Simulator first, then Android)
  *   npm run screenshot -- ios [name]
- *   npm run screenshot -- android [name]
+ *   npm run screenshot -- android [name]   # ANDROID_SERIAL=… to pick a specific Android device
  *
  * Files go to .artifacts/screenshots/ (git-ignored).
  */
@@ -13,34 +13,14 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import { adb, androidSerial, bootedIosSimulator } from './lib/devices.mjs';
+
 const [platformArg, nameArg] = process.argv.slice(2);
-
-function tryRun(cmd, args) {
-  try {
-    return execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-  } catch {
-    return null;
-  }
-}
-
-const adb = process.env.ANDROID_HOME ? `${process.env.ANDROID_HOME}/platform-tools/adb` : 'adb';
-
-function iosBooted() {
-  return /\(Booted\)/.test(tryRun('xcrun', ['simctl', 'list', 'devices', 'booted']) ?? '');
-}
-
-function androidConnected() {
-  const out = tryRun(adb, ['devices']) ?? '';
-  return out
-    .split('\n')
-    .slice(1)
-    .some((line) => /\tdevice$/.test(line.trim()) || /\sdevice$/.test(line));
-}
 
 let platform = platformArg;
 if (!platform) {
-  if (iosBooted()) platform = 'ios';
-  else if (androidConnected()) platform = 'android';
+  if (bootedIosSimulator()) platform = 'ios';
+  else if (androidSerial()) platform = 'android';
   else {
     console.error(
       'No booted iOS Simulator or connected Android device found. Start one with `npm run ios` / `npm run android`.',
@@ -58,7 +38,9 @@ try {
   if (platform === 'ios') {
     execFileSync('xcrun', ['simctl', 'io', 'booted', 'screenshot', file], { stdio: 'ignore' });
   } else if (platform === 'android') {
-    const png = execFileSync(adb, ['exec-out', 'screencap', '-p'], {
+    const serial = androidSerial();
+    if (!serial) throw new Error('no online Android device (check `adb devices`)');
+    const png = execFileSync(adb, ['-s', serial, 'exec-out', 'screencap', '-p'], {
       maxBuffer: 64 * 1024 * 1024,
     });
     writeFileSync(file, png);

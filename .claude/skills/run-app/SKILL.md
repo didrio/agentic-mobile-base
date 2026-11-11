@@ -41,7 +41,10 @@ Check both light and dark mode (Settings tab → Appearance) and, for layout wor
 
 - Maestro flows in `.maestro/` (YAML: `tapOn`, `inputText`, `assertVisible`, `takeScreenshot`).
   `npm run e2e` (needs `npm start` running for dev builds) or `npm run e2e -- --flow .maestro/<flow>.yaml`.
-  Screenshots from flows land in `.artifacts/maestro/`.
+  Screenshots from flows (`takeScreenshot: <name>`) land in
+  `.artifacts/maestro/<platform>/<run>/<Flow>/takeScreenshot/<name>.png`. A fresh dev-build install would
+  normally open the dev menu over the app; `scripts/e2e.mjs` launches with the `__expo_disable_*` URL params
+  so flows see the app itself.
 - Optional, richer agent control: `npm run start:mcp` starts the bundler with Expo's local MCP capabilities
   (screenshot/tap/find view/logs) — requires `npx expo login` and the Expo MCP server connected in the client.
 

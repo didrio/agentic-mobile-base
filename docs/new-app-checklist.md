@@ -16,7 +16,9 @@ npm run new-app -- --name "Habit Tracker" --id com.yourname.habittracker
 ```
 
 This sets the name, slug, URL scheme, iOS bundle ID and Android package (`app.json`), the package name, and the
-README title, and removes any EAS project link inherited from the base.
+README title, removes any EAS project link inherited from the base, and starts a fresh `TICKETS.md`. Then open
+the folder in Claude Code (Opus, high effort, plan mode on) and run `/start T1`: that session works through
+the rest of this checklist with you.
 
 ## 2. Make it yours
 

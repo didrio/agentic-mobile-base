@@ -1,22 +1,22 @@
-# Launches the app from a clean state. Reuse at the top of every flow:
+# Launches the app from a clean state. Reuse at the top of every flow, then wait for that flow's first screen:
 #   - runFlow: subflows/launch.yaml
+#   - extendedWaitUntil: { visible: 'Some text on the first screen', timeout: 60000 }
 appId: ${APP_ID}
 ---
-- launchApp:
-    clearState: true
-
-# Development builds: point the dev client at the local bundler (DEV_CLIENT_URL is set by
-# scripts/e2e.mjs; it's empty for preview/production builds).
+# Development builds: the dev-client link itself launches the app and points it at the local bundler
+# (DEV_CLIENT_URL is set by scripts/e2e.mjs and keeps the dev menu closed). Launching first and then sending
+# the link is unreliable on Android — the dev launcher can drop it while starting up.
 - runFlow:
     when:
       true: ${DEV_CLIENT_URL != ''}
     commands:
+      - clearState
       - openLink: ${DEV_CLIENT_URL}
-      # The dev menu shows a one-time intro after a fresh install.
-      - tapOn:
-          text: 'Continue'
-          optional: true
 
-- extendedWaitUntil:
-    visible: 'Home'
-    timeout: 60000
+# Preview / production builds: just launch.
+- runFlow:
+    when:
+      true: ${DEV_CLIENT_URL == ''}
+    commands:
+      - launchApp:
+          clearState: true

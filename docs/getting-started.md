@@ -80,12 +80,13 @@ Once a development build is installed, day-to-day you only need `npm start` and 
 
 ## Troubleshooting
 
-| Symptom                                                      | Fix                                                              |
-| ------------------------------------------------------------ | ---------------------------------------------------------------- |
-| Expo Go says the project is incompatible                     | Update Expo Go from the store (it only supports the latest SDK). |
-| "Cannot find native module …" / "… doesn't exist in Expo Go" | That library needs a development build (Options B–D).            |
-| Changes to `app.json` / native packages don't show up        | `npm run native:clean` then rebuild (`npm run ios` / `android`). |
-| Strange bundler errors after switching branches              | `npm start -- --clear`                                           |
-| Phone can't connect to the bundler                           | Same Wi-Fi? Otherwise `-- --tunnel`.                             |
-| iOS build fails on signing                                   | Open Xcode → Settings → Accounts, add your Apple ID, retry.      |
-| Something else                                               | `npm run doctor` and `npm run doctor:expo`.                      |
+| Symptom                                                                          | Fix                                                                                                                                                                            |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Expo Go says the project is incompatible                                         | Update Expo Go from the store (it only supports the latest SDK).                                                                                                               |
+| "Cannot find native module …" / "… doesn't exist in Expo Go"                     | That library needs a development build (Options B–D).                                                                                                                          |
+| Changes to `app.json` / native packages don't show up                            | `npm run native:clean` then rebuild (`npm run ios` / `android`).                                                                                                               |
+| Strange bundler errors after switching branches                                  | `npm start -- --clear`                                                                                                                                                         |
+| Phone can't connect to the bundler                                               | Same Wi-Fi? Otherwise `-- --tunnel`.                                                                                                                                           |
+| iOS build fails on signing                                                       | Open Xcode → Settings → Accounts, add your Apple ID, retry.                                                                                                                    |
+| `adb devices` shows a phantom offline `emulator-55xx`; Maestro finds "0 devices" | Another app listens on adb's emulator ports (e.g. Native Instruments NTKDaemon on 5563). Add `export ADB_LOCAL_TRANSPORT_MAX_PORT=5561` to `~/.zshrc`, then `adb kill-server`. |
+| Something else                                                                   | `npm run doctor` and `npm run doctor:expo`.                                                                                                                                    |

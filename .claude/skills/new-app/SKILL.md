@@ -39,18 +39,20 @@ derives the `.dev` / `.preview` variants.
 
 ## 4. Plan before building
 
-Write a short plan in the conversation: screens, data (local only? backend? auth?), native capabilities needed
-(camera, location, notifications, purchases…). For each native capability, check whether it works in Expo Go
-(see `add-native-capability`). Tell the user early if the app will need a development build.
+This is ticket T1 in the new app's `TICKETS.md` ("Shape the app"). Agree on a short plan with the user: screens
+and navigation, data (local only? backend? auth?), and native capabilities (camera, location, notifications,
+purchases…). For each native capability, check whether it works in Expo Go (see `add-native-capability`), and
+tell the user early if the app will need a development build.
 
 ## 5. Build the first slice and verify
 
-Implement the smallest end-to-end slice, then run the full verification loop from AGENTS.md
-(`npm run check`, then run/screenshot on a simulator if available). Update `.maestro/smoke.yaml` so it asserts the
-new home screen instead of "Start building".
+Implement the smallest end-to-end slice, then run the verification loop from AGENTS.md (`npm run check`, then
+run and screenshot on a simulator if one is available). Update `.maestro/smoke.yaml` so it checks the new first
+screen instead of "Start building".
 
-## 6. Hand off
+## 6. Write the backlog
 
-Tell the user: how to open it on their phone (`npm run start:go` → scan QR with Expo Go, or `npm run ios`),
-what's placeholder (icon, splash, `com.example`), and the next step for distribution (`npx eas-cli@latest init`,
-see the `release` skill).
+Turn the rest of the plan into tickets T2, T3, … in `TICKETS.md`, ordered by what to build next. Each one should
+be session-sized and detailed enough to start cold, with a **Session** recommendation (table in the `wrap` skill).
+Put placeholders (icon, splash, `com.example`, `npx eas-cli@latest init` for the app's own EAS project) on a
+ticket too, so they aren't forgotten. Then suggest `/wrap`.

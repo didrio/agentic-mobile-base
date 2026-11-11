@@ -19,8 +19,12 @@ export function ListSection({ title, footer, children }: ListSectionProps) {
   return (
     <View style={styles.section}>
       {title ? (
-        <Text variant="footnote" color="textSecondary" style={styles.sectionLabel}>
-          {title.toUpperCase()}
+        <Text
+          variant="footnote"
+          color="textSecondary"
+          accessibilityRole="header"
+          style={[styles.sectionLabel, styles.sectionTitle]}>
+          {title}
         </Text>
       ) : null}
       <View style={styles.sectionBody}>
@@ -112,6 +116,7 @@ export function ListRow({
 const useStyles = makeStyles((t) => ({
   section: { gap: t.spacing.sm },
   sectionLabel: { paddingHorizontal: t.spacing.lg },
+  sectionTitle: { textTransform: 'uppercase' },
   sectionBody: {
     backgroundColor: t.colors.surface,
     borderRadius: t.radius.lg,

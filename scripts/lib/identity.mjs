@@ -136,6 +136,16 @@ export function applyIdentity(root, { name, slug, id, scheme }) {
     const readme = readFileSync(readmePath, 'utf8');
     writeFileSync(readmePath, readme.replace(/^# .*$/m, `# ${name}`));
   }
+
+  // A new app starts its own backlog (the base's TICKETS.md is about the base itself).
+  const ticketsTemplate = join(root, 'scripts/templates/TICKETS.md');
+  if (existsSync(ticketsTemplate)) {
+    const today = new Date().toISOString().slice(0, 10);
+    const tickets = readFileSync(ticketsTemplate, 'utf8')
+      .replaceAll('{{APP_NAME}}', name)
+      .replaceAll('{{DATE}}', today);
+    writeFileSync(join(root, 'TICKETS.md'), tickets);
+  }
 }
 
 export function printNextSteps({ name, id }, { cdPath } = {}) {
@@ -144,12 +154,11 @@ export function printNextSteps({ name, id }, { cdPath } = {}) {
     `✓ ${name} (${id}) is ready.`,
     '',
     'Next steps:',
-    ...(cdPath ? [`  cd ${cdPath}`] : []),
-    '  npm run start:go        # open on your phone with Expo Go (scan the QR code)',
-    '  npm run doctor          # see which simulators/devices this Mac can run',
-    '  npx eas-cli@latest init # link a new EAS project (cloud builds, store delivery, OTA updates)',
+    `  1. Open ${cdPath ?? 'this folder'} in your editor with Claude Code`,
+    '  2. Model: Opus · Effort: high · Plan mode: on',
+    '  3. /start T1 — Shape the app (describe your idea; the agent plans it and writes the next tickets)',
     '',
-    'Replace the placeholder icon & splash in assets/ (see docs/new-app-checklist.md).',
+    'Handy along the way: npm run doctor · npm run ios / android · npx eas-cli@latest init (own EAS project)',
     '',
   ];
   console.log(lines.join('\n'));

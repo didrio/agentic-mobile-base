@@ -54,5 +54,16 @@ screen instead of "Start building".
 
 Turn the rest of the plan into tickets T2, T3, … in `TICKETS.md`, ordered by what to build next. Each one should
 be session-sized and detailed enough to start cold, with a **Session** recommendation (table in the `wrap` skill).
-Put placeholders (icon, splash, `com.example`, `npx eas-cli@latest init` for the app's own EAS project) on a
-ticket too, so they aren't forgotten. Then suggest `/wrap`.
+Put placeholders (icon, splash, `com.example`) on a ticket too, so they aren't forgotten. Always add a
+**"First preview build"** ticket (place it right after the first features, so testers can install early):
+
+- Goal: the app's own EAS project, preview builds installed on the user's devices, an OTA update received.
+- Done when: `npx eas-cli@latest init` + `update:configure` committed (revert its `eas.json` rewrite); Android
+  and iOS preview builds installed; an `update:preview` published after both builds finished shows up after two
+  cold starts (Settings → Update shows an update ID); surprises added to `docs/releasing.md`.
+- Session: Sonnet · medium effort · plan mode off.
+- Context: follow "First preview build (once per app)" in `docs/releasing.md`. The user must be present for the
+  iOS build (Apple login). Devices registered and the distribution certificate created for an earlier app are
+  reused; only the App ID and provisioning profile are new.
+
+Then suggest `/wrap`.

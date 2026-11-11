@@ -39,7 +39,8 @@ the rest of this checklist with you.
 
 ## 3. Connect services
 
-- [ ] `npx eas-cli@latest init` and `npx eas-cli@latest update:configure` (see `docs/releasing.md`).
+- [ ] `npx eas-cli@latest init` and `npx eas-cli@latest update:configure`, then the first preview build and OTA
+      check: "First preview build (once per app)" in `docs/releasing.md`. `/start T1` adds a ticket for it.
 - [ ] Backend: set `EXPO_PUBLIC_API_URL` in `.env` (copy `.env.example`) and for EAS (`eas env:create`).
 - [ ] Optional: crash reporting (Sentry), analytics, auth provider — add when the app needs them.
 

@@ -15,7 +15,16 @@ exactly what will happen.
 - EAS linked: `app.json` has `expo.extra.eas.projectId`. If not: `npx eas-cli@latest login` then
   `npx eas-cli@latest init` (writes owner + projectId into app.json), then `npx eas-cli@latest update:configure`
   (adds `updates.url`). Commit those changes.
-- Bundle ID in `app.json` is final (not `com.example…`).
+  `update:configure` also rewrites `eas.json` (adds a stray `development-simulator` channel): run
+  `git checkout eas.json` afterwards and keep only the `app.json` change.
+- Bundle ID in `app.json` is final (not `com.example…`) before anything goes to a store. Internal preview builds
+  work fine with `com.example…`.
+- The app has never had a preview build? Walk the user through "First preview build (once per app)" in
+  `docs/releasing.md` first. Tell them up front which steps need them at the keyboard (`device:create`, the
+  first iOS build's Apple login) and have them run those in their own terminal; the agent can run the
+  Android build, installs on emulators, and `update:preview` itself. Use `--no-wait` for builds (free-plan
+  Android builds can take an hour including the queue), and publish the test update only after both builds
+  have finished: a build ignores updates older than its own bundle.
 - Apple: paid Apple Developer account. Google: Play Console account; the **first** Android upload must be done
   manually in Play Console (Google requirement) — after that `eas submit` works with a service-account key.
 

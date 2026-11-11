@@ -55,6 +55,9 @@
         "projectId": "7aba526b-ace6-47e7-a68a-c53026ae2d50"
       }
     },
-    "owner": "ididrio"
+    "owner": "ididrio",
+    "updates": {
+      "url": "https://u.expo.dev/7aba526b-ace6-47e7-a68a-c53026ae2d50"
+    }
   }
 }

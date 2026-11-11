@@ -5,29 +5,13 @@ Living, ordered backlog for the **base template itself** (apps created from it g
 wraps a session updates this file and picks the next ticket. Rules: `.claude/skills/wrap/SKILL.md`. Capture ideas
 any time with `/ticket`.
 
-**Next:** T4 — Verify cloud delivery end to end · Opus · high effort · plan mode off
+**Next:** T5 — Try Expo's MCP tools for agents · Sonnet · medium effort · plan mode off
 
 ## In progress
 
 _None._
 
 ## Up next
-
-### T4 — Verify cloud delivery end to end
-
-- **Status:** ready (Apple Developer account renewed 2026-11-11, so iOS is in scope)
-- **Session:** Opus · high effort · plan mode off
-- **Goal:** Prove the delivery path works for real: preview builds install on devices and receive OTA updates.
-- **Done when:**
-  - [ ] `npm run build:preview -- --platform android` → APK installs on the emulator/phone via the EAS link.
-  - [ ] A small JS change shipped with `npm run update:preview -- --message "…"` shows up in that build after a
-        restart.
-  - [ ] iOS preview build installs on a registered iPhone (ad hoc: `eas device:create` first) and receives the
-        same OTA update.
-  - [ ] Surprises documented in `docs/releasing.md`.
-- **Context:** The project is linked to EAS (`owner` + `extra.eas.projectId` in app.json). Workflow files in
-  `.eas/workflows/` validate. Updates aren't configured yet: run `npx eas-cli@latest update:configure` first
-  (writes `updates.url`). The user must be present for Apple/Google credential prompts.
 
 ### T5 — Try Expo's MCP tools for agents
 
@@ -50,6 +34,9 @@ _None._
 - `scripts/setup-mac.sh android`: also pre-install what the first Gradle build fetched on its own (NDK
   27.1.12297006, CMake 3.22.1, build-tools 36.0.0; read versions from the project rather than hard-coding) so
   the first `npm run android` is faster.
+- `npm run build:preview:local` (`eas build --local`) as a documented fallback for long EAS queues when testing
+  only on your own devices (~10 min on this Mac vs ~1 h for free-plan Android). Trade-offs are in
+  `docs/releasing.md` ("What to expect").
 
 ## Done
 
@@ -60,3 +47,6 @@ _None._
 - T3 — Base updates for apps — 2026-11-11 — `create-app` clones the base history (`base` remote); new
   `npm run sync-base` + `sync-base` skill merge base improvements (keeps TICKETS.md, regenerates lockfile); tried
   end to end on a scratch copy.
+- T4 — Cloud delivery verified — 2026-11-11 — Android + iOS (ad hoc) preview builds installed on emulator and
+  real phones, OTA via `update:preview` received on both; `updates.url` set; findings in `docs/releasing.md`
+  ("First preview build"), `release` skill, and a "First preview build" ticket in every new app (`new-app`).

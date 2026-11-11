@@ -23,11 +23,16 @@ All three can be installed side by side on one phone.
 
 1. Expo account: `npx eas-cli@latest login`
 2. Link the project: `npx eas-cli@latest init` (writes `owner` and `extra.eas.projectId` into `app.json`)
-3. Enable OTA updates: `npx eas-cli@latest update:configure` (writes `updates.url`)
+3. Enable OTA updates: `npx eas-cli@latest update:configure` (writes `updates.url` into `app.json`). It also
+   rewrites `eas.json`: it reformats it and gives `development-simulator` its own `development-simulator` channel,
+   although that profile already inherits `channel: development` via `extends`. Undo that with
+   `git checkout eas.json`; only the `app.json` change is needed.
 4. Commit `app.json`.
 5. **Apple** (iOS): enroll in the Apple Developer Program (paid, yearly). On your first iOS build, EAS logs into
    your Apple account and creates/stores certificates and provisioning profiles for you. On first submit it can
-   create the App Store Connect app record.
+   create the App Store Connect app record. What's per **team** (done once, reused by every app): registered
+   devices and the distribution certificate. What's per **app** (created by EAS on the app's first iOS build):
+   the App ID (bundle identifier) and its provisioning profiles.
 6. **Google** (Android): create a Google Play Console account (one-time fee) and the app. Google requires the
    **first** upload to be done manually: run `npm run build:production -- --platform android`, download the
    `.aab`, upload it in Play Console. Then create a service account key for automated submissions and add it to
@@ -55,6 +60,51 @@ npx eas-cli@latest status
 
 Roll back a bad OTA update: `npx eas-cli@latest update:rollback` (or republish a previous update with
 `update:republish`).
+
+## First preview build (once per app)
+
+Proves the whole delivery path before real testers depend on it. Verified on the base on 2026-11-11. You need
+to be at the keyboard for the iOS steps (Apple login prompts), so run those in your own terminal.
+
+1. EAS linked and updates configured (one-time setup, steps 1–4 above).
+2. **Android:** `npm run build:preview -- --platform android --no-wait`. EAS creates the app's keystore itself,
+   even with `--non-interactive`, so this needs no input.
+3. **iPhone, first time only (per Apple team):** `npx eas-cli@latest device:create` → **Website** → open the
+   link/QR code on the iPhone and install the profile. Turn on **Developer Mode** on the iPhone (Settings →
+   Privacy & Security → Developer Mode; the phone restarts), which ad hoc apps need. If the switch isn't there
+   yet, it appears after the first attempt to open an ad hoc app.
+4. **iOS:** `npm run build:preview -- --platform ios`. Log in to Apple when asked; let EAS create the
+   distribution certificate (or reuse the team's) and the ad hoc provisioning profile with your devices in it.
+   Register new devices later? Run `device:create` again, then a new iOS build so the profile includes them.
+5. **Install:** open each build's page on expo.dev on the device (iPhone: Safari → Install; Android: download
+   the APK, or `adb install` it on an emulator). Check the app opens and **Settings → Update** says "Embedded
+   bundle".
+6. **OTA:** once the builds have finished (see below), make a small visible JS change,
+   `npm run update:preview -- --message "…"`, then on each device
+   force-quit and reopen the app **twice**. The first launch downloads the update in the background; the second
+   runs it, and **Settings → Update** shows the update ID instead of "Embedded bundle". Revert the test change
+   in git afterwards.
+
+What to expect:
+
+- **An update only reaches builds made before it.** A build ignores any update older than the JS bundle built
+  into it (its log says "No update available" even though the server has one). So for this check, publish the
+  update **after** the build has finished; in normal use that's exactly what you want, since a newer build
+  already contains that code.
+- **Free plan queues differ by platform, and builds take a while.** iOS took ~6 minutes in total; Android
+  waited ~40 minutes in the queue, then took ~25 minutes to build. Each cloud build starts on a fresh machine,
+  so later builds aren't much faster; the way to save time is not to build: JS changes ship as OTA updates in
+  about a minute, and only native changes need a new build. Start builds with `--no-wait` and check `npx eas-cli@latest build:list`. Live queue
+  times: https://expo.dev/eas-build-status. In a hurry and only testing on your own devices? Add `--local` to
+  build on this Mac (needs the native toolchain; no install page or build history on expo.dev, so not for
+  testers).
+- **`com.example…` IDs work for internal builds.** Apple registered `com.example.base.preview` without
+  complaint. They still have to change before any store upload.
+- **One update, one group per platform.** iOS and Android have different fingerprints, so `eas update` prints a
+  separate runtime version and update group for each. If an update never arrives, compare the build's runtime
+  version (`npx eas-cli@latest build:view <id>`, or the build page) with the one `eas update` printed for that
+  platform. They differ when something native changed since the build: make a new build. Local `ios/` and
+  `android/` folders don't affect it (they're git-ignored, so the fingerprint skips them).
 
 ## Store release checklist
 

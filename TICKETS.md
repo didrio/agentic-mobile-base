@@ -5,7 +5,7 @@ Living, ordered backlog for the **base template itself** (apps created from it g
 wraps a session updates this file and picks the next ticket. Rules: `.claude/skills/wrap/SKILL.md`. Capture ideas
 any time with `/ticket`.
 
-**Next:** T5 — Try Expo's MCP tools for agents · Sonnet · medium effort · plan mode off
+**Next:** T6 — Pre-install Android build tools in setup-mac · Sonnet · low effort · plan mode off
 
 ## In progress
 
@@ -13,17 +13,17 @@ _None._
 
 ## Up next
 
-### T5 — Try Expo's MCP tools for agents
+### T6 — Pre-install Android build tools in setup-mac
 
 - **Status:** ready
-- **Session:** Sonnet · medium effort · plan mode off
-- **Goal:** Decide whether Expo's MCP server (docs search, EAS status) and local capabilities (`npm run start:mcp`:
-  screenshots, taps, logs) should be part of the default agent loop.
+- **Session:** Sonnet · low effort · plan mode off
+- **Goal:** `bash scripts/setup-mac.sh android` also installs what the first Gradle build otherwise fetches itself
+  (NDK 27.1.12297006, CMake 3.22.1, build-tools 36.0.0), so the first `npm run android` is faster.
 - **Done when:**
-  - [ ] `/mcp` authenticated; tools listed and tried against the running dev build.
-  - [ ] Compared with the current loop (`npm run screenshot` + Maestro) on speed and token cost.
-  - [ ] AGENTS.md / `run-app` skill updated with the recommendation (or a note on why not).
-- **Context:** `expo-mcp` is a dev dependency; `start:mcp` sets `EXPO_UNSTABLE_MCP_SERVER=1`. Needs `npx expo login`.
+  - [ ] Versions are read from the generated project / Expo config, not hard-coded (fall back to the above).
+  - [ ] Script stays idempotent and `npm run doctor` still passes.
+  - [ ] `docs/` / `run-app` mention updated if behaviour changes.
+- **Context:** `scripts/setup-mac.sh`; sdkmanager lives under the Android SDK `cmdline-tools`.
 
 ## Backlog
 
@@ -31,9 +31,6 @@ _None._
 - Exercise `npm run sync-base` on a real Expo SDK upgrade (base upgraded first, then one app) and note
   surprises in the `sync-base` skill. Only meaningful once an app exists and the next SDK ships.
 - A neutral placeholder icon/splash for the base (currently Expo's template artwork).
-- `scripts/setup-mac.sh android`: also pre-install what the first Gradle build fetched on its own (NDK
-  27.1.12297006, CMake 3.22.1, build-tools 36.0.0; read versions from the project rather than hard-coding) so
-  the first `npm run android` is faster.
 - `npm run build:preview:local` (`eas build --local`) as a documented fallback for long EAS queues when testing
   only on your own devices (~10 min on this Mac vs ~1 h for free-plan Android). Trade-offs are in
   `docs/releasing.md` ("What to expect").
@@ -50,3 +47,4 @@ _None._
 - T4 — Cloud delivery verified — 2026-11-11 — Android + iOS (ad hoc) preview builds installed on emulator and
   real phones, OTA via `update:preview` received on both; `updates.url` set; findings in `docs/releasing.md`
   ("First preview build"), `release` skill, and a "First preview build" ticket in every new app (`new-app`).
+- T5 — Expo MCP tried — 2026-11-11 — docs search, EAS status and router sitemap are useful; local device automation failed ("No platform found"), so the screenshot + Maestro loop stays; documented in `run-app` and AGENTS.md.

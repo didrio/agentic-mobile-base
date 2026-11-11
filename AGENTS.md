@@ -53,7 +53,8 @@ cloud builds, store submission and OTA updates.
 Skills with step-by-step playbooks live in `.claude/skills/` (plain Markdown — any agent can read them):
 `start`, `wrap`, `ticket` (the session workflow below), `new-app`, `add-feature`, `add-native-capability`,
 `run-app`, `release`, `sync-base`. Claude Code also gets Expo's official plugin (`expo@claude-plugins-official`: Expo/EAS
-skills + the Expo MCP server).
+skills + the Expo MCP server). Use the MCP server for docs search and EAS build/workflow status; for seeing and
+driving the app keep `npm run screenshot` + Maestro (the MCP device automation was unreliable; see `run-app`).
 
 ## How work flows: tickets and sessions
 

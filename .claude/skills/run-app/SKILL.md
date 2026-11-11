@@ -45,8 +45,14 @@ Check both light and dark mode (Settings tab → Appearance) and, for layout wor
   `.artifacts/maestro/<platform>/<run>/<Flow>/takeScreenshot/<name>.png`. A fresh dev-build install would
   normally open the dev menu over the app; `scripts/e2e.mjs` launches with the `__expo_disable_*` URL params
   so flows see the app itself.
-- Optional, richer agent control: `npm run start:mcp` starts the bundler with Expo's local MCP capabilities
-  (screenshot/tap/find view/logs) — requires `npx expo login` and the Expo MCP server connected in the client.
+- Expo MCP local automation (`npm run start:mcp`: screenshot / tap / find view / logs) is **not** part of the
+  default loop. Tried on the iOS simulator (T5): with the bundler running and the app loaded, its screenshot,
+  find-view and log tools failed with "No platform found" (the app never attached to the MCP tunnel), while
+  `npm run screenshot` takes ~2 s and always works. Coordinate taps did work (iOS points, not image pixels).
+  Stick to `npm run screenshot` + Maestro. Revisit if Expo stabilises it (it is `EXPO_UNSTABLE_*`).
+- The **cloud-side** MCP tools are worth using: `search_documentation` / `read_documentation` (cheap, versioned
+  Expo docs lookup), `build_list` / `build_info` / `workflow_list` (EAS status without leaving the session),
+  and `expo_router_sitemap` (route list while the bundler runs). Authenticate once via `/mcp`.
 
 ## 4. Logs
 

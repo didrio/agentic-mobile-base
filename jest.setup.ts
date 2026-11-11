@@ -29,3 +29,33 @@ jest.mock('expo-haptics', () => ({
   ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
   NotificationFeedbackType: { Success: 'success', Warning: 'warning', Error: 'error' },
 }));
+
+// Reanimated runs worklets on the UI thread, which doesn't exist in Jest (its bundled mock still
+// initialises the native module in v4). Minimal stand-ins for the hooks the app uses: shared values
+// hold plain values, frame callbacks and reactions never fire.
+jest.mock('react-native-reanimated', () => {
+  const { useState } = require('react');
+  const makeSharedValue = (initial: unknown) => {
+    let current = initial;
+    return {
+      get: () => current,
+      set: (next: unknown) => {
+        current = typeof next === 'function' ? next(current) : next;
+      },
+      get value() {
+        return current;
+      },
+      set value(next: unknown) {
+        current = next;
+      },
+    };
+  };
+  return {
+    useSharedValue: (initial: unknown) => useState(() => makeSharedValue(initial))[0],
+    useDerivedValue: (compute: () => unknown) => makeSharedValue(compute()),
+    useFrameCallback: () => ({ setActive: () => {}, isActive: false, callbackId: -1 }),
+    useAnimatedReaction: () => {},
+    withDecay: () => 0,
+    cancelAnimation: () => {},
+  };
+});

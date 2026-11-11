@@ -5,7 +5,7 @@ Living, ordered backlog for the **base template itself** (apps created from it g
 wraps a session updates this file and picks the next ticket. Rules: `.claude/skills/wrap/SKILL.md`. Capture ideas
 any time with `/ticket`.
 
-**Next:** T6 — Pre-install Android build tools in setup-mac · Sonnet · low effort · plan mode off
+**Next:** none queued. Pick from Backlog or add tickets with `/ticket`.
 
 ## In progress
 
@@ -13,17 +13,7 @@ _None._
 
 ## Up next
 
-### T6 — Pre-install Android build tools in setup-mac
-
-- **Status:** ready
-- **Session:** Sonnet · low effort · plan mode off
-- **Goal:** `bash scripts/setup-mac.sh android` also installs what the first Gradle build otherwise fetches itself
-  (NDK 27.1.12297006, CMake 3.22.1, build-tools 36.0.0), so the first `npm run android` is faster.
-- **Done when:**
-  - [ ] Versions are read from the generated project / Expo config, not hard-coded (fall back to the above).
-  - [ ] Script stays idempotent and `npm run doctor` still passes.
-  - [ ] `docs/` / `run-app` mention updated if behaviour changes.
-- **Context:** `scripts/setup-mac.sh`; sdkmanager lives under the Android SDK `cmdline-tools`.
+_None._
 
 ## Backlog
 
@@ -48,3 +38,4 @@ _None._
   real phones, OTA via `update:preview` received on both; `updates.url` set; findings in `docs/releasing.md`
   ("First preview build"), `release` skill, and a "First preview build" ticket in every new app (`new-app`).
 - T5 — Expo MCP tried — 2026-11-11 — docs search, EAS status and router sitemap are useful; local device automation failed ("No platform found"), so the screenshot + Maestro loop stays; documented in `run-app` and AGENTS.md.
+- T6 — Android build tools in setup-mac — 2026-11-11 — setup installs NDK (from RN catalog), CMake 3.22.1 and build-tools 36.0.0 (AGP defaults, env-overridable) so the first Gradle build is faster.

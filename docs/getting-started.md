@@ -48,7 +48,7 @@ with `open "devices://device/open?id=<device-id>"`. Creating a device doesn't st
 
 ## Option C — Android emulator
 
-1. `bash scripts/setup-mac.sh android` — installs JDK 17, the Android SDK (headless, no Android Studio needed) and
+1. `bash scripts/setup-mac.sh android` — installs JDK 17, the Android SDK (headless, no Android Studio needed), the NDK/CMake/build-tools Gradle would otherwise download on the first build, and
    creates a Pixel emulator. Add the printed `export` lines to `~/.zshrc` and open a new terminal.
    (Prefer a GUI? Install Android Studio instead and create a device in its Device Manager.)
 2. `npm run android` — boots the emulator, builds, installs and starts the bundler.

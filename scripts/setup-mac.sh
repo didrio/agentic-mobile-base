@@ -21,6 +21,12 @@ ANDROID_COMPILE_SDK="${ANDROID_COMPILE_SDK:-$(toml_value compileSdk)}"
 ANDROID_COMPILE_SDK="${ANDROID_COMPILE_SDK:-37}"
 ANDROID_BUILD_TOOLS="${ANDROID_BUILD_TOOLS:-$(toml_value buildTools)}"
 ANDROID_BUILD_TOOLS="${ANDROID_BUILD_TOOLS:-37.0.0}"
+# What Gradle otherwise downloads during the first build: the NDK version React Native pins, and the CMake and
+# build-tools defaults of the Android Gradle Plugin (not written in any project file, hence the fallbacks).
+ANDROID_NDK="${ANDROID_NDK:-$(toml_value ndkVersion)}"
+ANDROID_NDK="${ANDROID_NDK:-27.1.12297006}"
+ANDROID_CMAKE="${ANDROID_CMAKE:-3.22.1}"
+ANDROID_AGP_BUILD_TOOLS="${ANDROID_AGP_BUILD_TOOLS:-36.0.0}"
 
 step() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
@@ -101,6 +107,10 @@ setup_android() {
     exit 1
   fi
   packages+=("$image")
+  local extra
+  for extra in "ndk;${ANDROID_NDK}" "cmake;${ANDROID_CMAKE}" "build-tools;${ANDROID_AGP_BUILD_TOOLS}"; do
+    if [ -n "$(pick "$extra")" ]; then packages+=("$extra"); else echo "Note: $extra not listed; Gradle will fetch it."; fi
+  done
   # Missing platform/build-tools aren't fatal: Gradle downloads what it needs on the first Android build.
   if [ -n "$platform" ]; then packages+=("$platform"); else echo "Note: no platform package for SDK ${ANDROID_COMPILE_SDK}; Gradle will fetch it."; fi
   if [ -n "$build_tools" ]; then packages+=("$build_tools"); else echo "Note: build-tools ${ANDROID_BUILD_TOOLS} not listed; Gradle will fetch it."; fi

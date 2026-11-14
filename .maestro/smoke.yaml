@@ -10,10 +10,16 @@ name: Smoke
 - takeScreenshot: home
 
 - tapOn: 'Settings'
-- assertVisible: 'Version'
 - tapOn: 'Dark'
+# The app info is at the bottom of Settings, below the fold once Settings grows.
+- scrollUntilVisible:
+    element: 'Version'
+    direction: DOWN
 - assertVisible: 'Variant'
 - takeScreenshot: settings-dark
 
 # Leave the app as we found it.
+- scrollUntilVisible:
+    element: 'System'
+    direction: UP
 - tapOn: 'System'
